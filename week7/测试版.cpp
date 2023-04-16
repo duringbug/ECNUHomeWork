@@ -4,6 +4,10 @@
 #include <math.h>
 using namespace std;
 
+#define RANGE 1000000 // 数字范围
+#define HASH 100003   // 数组长度，即hash值
+#define CIRCLE 2      // 循环取平均值
+
 class Student
 {
 private:
@@ -20,13 +24,13 @@ public:
 Student::Student()
 {
     this->id = idInit();
-    this->hash = abs(this->id) % 100003;
+    this->hash = abs(this->id) % HASH;
 }
 
 Student::Student(int id)
 {
     this->id = idInit(id);
-    this->hash = abs(this->id) % 100003;
+    this->hash = abs(this->id) % HASH;
 }
 
 Student::~Student()
@@ -35,7 +39,7 @@ Student::~Student()
 
 long long Student::idInit()
 {
-    long long range = 1000000000;
+    long long range = RANGE;
     std::default_random_engine e;
     std::uniform_int_distribution<int> u(-1 * range, range);
     e.seed(time(nullptr));
@@ -62,12 +66,13 @@ public:
     void insert(Student);
     void insert(Student, int);
     bool search(Student);
+    bool simpleSearch(Student);
     ~HashMap();
 };
 
 HashMap::HashMap()
 {
-    this->hashMap = new data[100003];
+    this->hashMap = new data[HASH];
     for (int i = 0; i < 0; i++)
     {
         hashMap[i].filled = false;
@@ -85,7 +90,7 @@ void HashMap::insert(Student student)
     int h = student.hash;
     while (hashMap[h].filled)
     {
-        h = (h + 1) % 100003;
+        h = (h + 1) % HASH;
     }
     hashMap[h].value = student.id;
     hashMap[h].filled = true;
@@ -96,13 +101,13 @@ void HashMap::insert(Student student, int)
     int h = student.hash;
     while (hashMap[h].filled)
     {
-        h = (h + 1) % 100003;
+        h = (h + 1) % HASH;
     }
     hashMap[h].value = student.id;
     hashMap[h].filled = true;
 }
 
-bool HashMap::search(Student student)
+bool HashMap::search(Student student) // hash查找
 {
     int i = student.hash;
     while (hashMap[i].filled)
@@ -112,7 +117,25 @@ bool HashMap::search(Student student)
             cout << "Yes" << endl;
             return true;
         }
-        i = (i + 1) % 100003;
+        i = (i + 1) % HASH;
+    }
+    cout << "No" << endl;
+    return false;
+}
+bool HashMap::simpleSearch(Student student) // 循序查找
+{
+    int i = 0;
+    while (i < HASH)
+    {
+        if (hashMap[i].filled)
+        {
+            if (hashMap->value == student.id)
+            {
+                cout << "Yes" << endl;
+                return true;
+            }
+        }
+        i++;
     }
     cout << "No" << endl;
     return false;
@@ -125,32 +148,50 @@ HashMap::~HashMap()
 
 int main()
 {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 1);
+
+    std::default_random_engine e;
+    std::uniform_int_distribution<int> u(-1 * RANGE, RANGE);
+    e.seed(time(nullptr));
+
     long long N;
+    cout << "生成多少个数:";
     cin >> N;
-    clock_t start, end;
-    start = clock();
-    HashMap map;
-
-    Student student[N];
-
-    for (int i = 0; i < N; i++)
+    double circle = 0;
+    for (int i = 0; i < CIRCLE; i++)
     {
-        char method;
-        int q;
-        cin >> method >> q;
-        student[i] = Student(q);
-        switch (method)
+        clock_t start, end;
+        start = clock();
+        HashMap map;
+
+        Student *student[N];
+
+        for (int i = 0; i < N; i++)
         {
-        case 'I':
-            map.insert(student[i]);
-            break;
-        case 'Q':
-            map.search(student[i]);
-        default:
-            break;
+            student[i] = new Student(u(e)); // 数据生成器
+            cout << dis(gen) << " " << student[i]->id << " ";
+            switch (dis(gen))
+            {
+            case 0:
+                map.insert(*student[i]);
+                cout << endl;
+                break;
+            case 1:
+                map.simpleSearch(*student[i]);
+            default:
+                break;
+            }
+        }
+        end = clock();
+        cout << (double)(end - start) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
+        circle = (double)(end - start) / CLOCKS_PER_SEC * 1000 + circle;
+        for (int i = 0; i < HASH; i++)
+        {
+            map.hashMap[i].filled = false;
         }
     }
-    end = clock();
-    cout << (double)(end - start) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
+    cout << "平均耗时:" << (circle / CIRCLE) << "ms" << endl;
     return 0;
 }
