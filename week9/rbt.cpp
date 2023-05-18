@@ -178,6 +178,8 @@ int main()
     RedBlackTree<int, int> rbt = RedBlackTree<int, int>();
     int n;
     cin >> n;
+    clock_t start, end;
+    start = clock();
     for (int i = 0; i < n; i++)
     {
         int r = 0;
@@ -185,5 +187,7 @@ int main()
         rbt.put(r, r);
     }
     rbt.inorderTraversal(rbt.getroot());
+    end = clock();
+    cout << (double)(end - start) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
     return 0;
 }
